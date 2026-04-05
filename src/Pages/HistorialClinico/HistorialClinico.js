@@ -1,6 +1,7 @@
 // Pages/Medical/Medical.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
+import { useClienteId } from "../../utils/useClienteId";
 
 const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   const [data, setData] = useState([]);
@@ -9,18 +10,23 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   const [tiposConsulta, setTiposConsulta] = useState([]);
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { clienteId, isCliente, resolving } = useClienteId(currentUser);
 
   useEffect(() => {
+    if (resolving) return; // esperar a tener clienteId
     fetchPacientes();
     fetchVeterinarios();
     fetchTiposConsulta();
     fetchCitas();
     fetchHistorial();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolving, clienteId]);
 
   const fetchPacientes = async () => {
     try {
-      const response = await api.get("/animales");
+      // Si es cliente, solo sus animales (para el selector del formulario)
+      const params = isCliente && clienteId ? { cliente_id: clienteId } : {};
+      const response = await api.get("/animales", { params });
       setPacientes(response.data.data || []);
     } catch (error) {
       console.error("Error al cargar pacientes:", error);
@@ -57,7 +63,10 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   const fetchHistorial = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/historial-medico");
+      // Si es cliente, filtrar historial solo de sus animales
+      // La API filtra por animal_id; si hay varios animales, mostramos todos los del cliente
+      const params = isCliente && clienteId ? { cliente_id: clienteId } : {};
+      const response = await api.get("/historial-medico", { params });
 
       const historialData = response.data.data || [];
 

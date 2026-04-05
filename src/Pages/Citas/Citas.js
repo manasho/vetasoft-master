@@ -1,7 +1,7 @@
 // Pages/Citas/Citas.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
-
+import {useRoleConfig, buildParams } from "../../utils/useRoleConfig";
 const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
   const [data, setData] = useState([]);
   const [pacientes, setPacientes] = useState([]);
@@ -9,6 +9,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
   const [estadosCitas, setEstadosCitas] = useState([]);
   const [tiposConsulta, setTiposConsulta] = useState([]);
   const [loading, setLoading] = useState(true);
+  const rc = useRoleConfig(currentUser);
 
   useEffect(() => {
     fetchPacientes();
@@ -16,11 +17,13 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
     fetchEstadosCitas();
     fetchTiposConsulta();
     fetchCitas();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rc.filtros.clienteId, rc.filtros.veterinarioId]);
 
   const fetchPacientes = async () => {
     try {
-      const response = await api.get("/animales");
+      const params = buildParams(rc, "animales");
+      const response = await api.get("/animales", { params });
       setPacientes(response.data.data || []);
     } catch (error) {
       console.error("Error al cargar pacientes:", error);
@@ -74,7 +77,10 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
   const fetchCitas = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/citas");
+      // Armamos los parámetros automáticamente según tu rol (gafas)
+      const params = buildParams(rc, "citas"); 
+      // Mandamos la petición a la API enviando esos parámetros
+      const response = await api.get("/citas", { params });
 
       const citasData = response.data.data || [];
 

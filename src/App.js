@@ -105,7 +105,9 @@ function App() {
       name: usuario.nombre,
       email: usuario.correo,
       role: usuario.nombre_rol || 'Usuario',
-      roleId: usuario.rol_id
+      roleId: usuario.rol_id,
+      clienteId:     usuario.cliente_id      ?? null, // rol 3 (cliente)
+      veterinarioId: usuario.veterinario_id  ?? null, // rol 5 (médico tratante) / 6 (auxiliar)
     };
     
     setCurrentUser(userData);
@@ -204,6 +206,7 @@ function App() {
             openModal={openModal}
             closeModal={closeModal}
             authToken={authToken}
+            currentUser={currentUser}
           />
         );
       
@@ -285,6 +288,7 @@ function App() {
           <Vacunacion
             openModal={openModal}
             closeModal={closeModal}
+            currentUser={currentUser}
           />
         );
       

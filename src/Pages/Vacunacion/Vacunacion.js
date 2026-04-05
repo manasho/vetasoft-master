@@ -1,25 +1,31 @@
 // Pages/Vacunacion/Vacunacion.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
+import { useClienteId } from "../../utils/useClienteId";
 
-const Vacunacion = ({ openModal, closeModal }) => {
+const Vacunacion = ({ openModal, closeModal, currentUser }) => {
   const [historial, setHistorial] = useState([]);
   const [animales, setAnimales] = useState([]);
   const [vacunas, setVacunas] = useState([]);
   const [veterinarios, setVeterinarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroAnimal, setFiltroAnimal] = useState("");
+  const { clienteId, isCliente, resolving } = useClienteId(currentUser);
 
   useEffect(() => {
+    if (resolving) return; // esperar a tener clienteId
     fetchData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolving, clienteId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Si es cliente, filtrar sus animales
+      const animalesParams = isCliente && clienteId ? { cliente_id: clienteId } : {};
       const [histRes, animalesRes, vacunasRes, vetsRes] = await Promise.all([
-        api.get("/historial-vacunacion"),
-        api.get("/animales"),
+        api.get("/historial-vacunacion", { params: animalesParams }),
+        api.get("/animales", { params: animalesParams }),
         api.get("/vacunas"),
         api.get("/veterinarios"),
       ]);
