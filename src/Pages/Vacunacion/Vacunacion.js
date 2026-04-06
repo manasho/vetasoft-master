@@ -1,7 +1,7 @@
 // Pages/Vacunacion/Vacunacion.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
-import { useClienteId } from "../../utils/useClienteId";
+import { useRoleConfig, buildParams } from "../../utils/useRoleConfig";
 
 const Vacunacion = ({ openModal, closeModal, currentUser }) => {
   const [historial, setHistorial] = useState([]);
@@ -10,21 +10,21 @@ const Vacunacion = ({ openModal, closeModal, currentUser }) => {
   const [veterinarios, setVeterinarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroAnimal, setFiltroAnimal] = useState("");
-  const { clienteId, isCliente, resolving } = useClienteId(currentUser);
+  const rc = useRoleConfig(currentUser);
 
   useEffect(() => {
-    if (resolving) return; // esperar a tener clienteId
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolving, clienteId]);
+  }, [rc.filtros.clienteId, rc.filtros.veterinarioId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       // Si es cliente, filtrar sus animales
-      const animalesParams = isCliente && clienteId ? { cliente_id: clienteId } : {};
+     const animalesParams = buildParams(rc, "animales");
+      const historialParams = buildParams(rc, "historial-vacunacion");
       const [histRes, animalesRes, vacunasRes, vetsRes] = await Promise.all([
-        api.get("/historial-vacunacion", { params: animalesParams }),
+        api.get("/historial-vacunacion", { params: historialParams }),
         api.get("/animales", { params: animalesParams }),
         api.get("/vacunas"),
         api.get("/veterinarios"),
@@ -45,8 +45,17 @@ const Vacunacion = ({ openModal, closeModal, currentUser }) => {
     setFiltroAnimal(animalId);
     try {
       setLoading(true);
-      const url = animalId ? `/historial-vacunacion?animal_id=${animalId}` : "/historial-vacunacion";
-      const res = await api.get(url);
+      
+      // 1. Construimos los parámetros de seguridad base
+      const params = buildParams(rc, "historial-vacunacion");
+      
+      // 2. Si el usuario seleccionó un animal específico, se lo sumamos a los parámetros
+      if (animalId) {
+        params.animal_id = animalId;
+      }
+      // 3. Hacemos la petición blindada
+      const res = await api.get("/historial-vacunacion", { params });
+      
       setHistorial(res.data.data || []);
     } catch (error) {
       console.error("Error al filtrar:", error);
@@ -193,7 +202,9 @@ const Vacunacion = ({ openModal, closeModal, currentUser }) => {
     <div className="section">
       <div className="section-header">
         <div>
-          <h2 className="section-title">Historial de Vacunación</h2>
+          <h2 className="section-title">
+  {rc.isCliente ? 'Carnet de Vacunación' : 'Panel de Vacunación'}
+</h2>
           <p style={{ color: "#666", marginTop: "8px" }}>
             {historial.length} {historial.length === 1 ? "registro" : "registros"}
             {filtroAnimal && " (filtrado)"}
@@ -205,6 +216,7 @@ const Vacunacion = ({ openModal, closeModal, currentUser }) => {
             onChange={(e) => fetchHistorialByAnimal(e.target.value)}
             style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "14px" }}
           >
+            
             <option value="">Todos los animales</option>
             {animales.map((a) => (
               <option key={a.animal_id} value={a.animal_id}>
@@ -212,9 +224,11 @@ const Vacunacion = ({ openModal, closeModal, currentUser }) => {
               </option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={() => openModal("Registrar Vacunación", <FormularioVacunacion />)}>
-            ➕ Registrar Vacuna
-          </button>
+         {rc.canEdit && (
+  <button className="btn btn-primary" onClick={() => openModal("Registrar Vacunación", <FormularioVacunacion />)}>
+    ➕ Registrar Vacuna
+  </button>
+)}
         </div>
       </div>
 

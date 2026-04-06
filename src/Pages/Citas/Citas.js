@@ -10,7 +10,8 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
   const [tiposConsulta, setTiposConsulta] = useState([]);
   const [loading, setLoading] = useState(true);
   const rc = useRoleConfig(currentUser);
-
+  console.log("🕵️ Usuario que llegó al panel:", currentUser);
+  console.log("🕵️ Parámetros a enviar:", buildParams(rc, "citas"));
   useEffect(() => {
     fetchPacientes();
     fetchVeterinarios();
@@ -368,7 +369,9 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
   return (
     <div className="section appointments-section">
       <div className="section-header">
-        <h2 className="section-title">Gestión de Citas</h2>
+        <h2 className="section-title">
+          {rc.isCliente ? 'Mis Citas' : 'Gestión de Citas'}
+        </h2>
         <button
           className="btn btn-primary"
           onClick={() => openModal("Agendar Nueva Cita", <FormularioCita />)}
@@ -466,6 +469,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
                   )}
                 </td>
                 <td className="actions-cell">
+                  
                   <button
                     className="btn btn-secondary"
                     onClick={() =>
@@ -517,6 +521,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
                   >
                     👁️ Ver
                   </button>
+                  {rc.canEdit && (
                   <button
                     className="btn btn-secondary"
                     onClick={() =>
@@ -528,12 +533,15 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
                   >
                     ✏️ Editar
                   </button>
+                  )}
+                  {rc.canDelete && (
                   <button
                     className="btn btn-danger"
                     onClick={() => handleDeleteCita(cita.citaId)}
                   >
                     🗑️ Eliminar
                   </button>
+                  )}
                 </td>
               </tr>
             ))

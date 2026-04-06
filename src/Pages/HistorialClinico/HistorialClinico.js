@@ -1,8 +1,7 @@
 // Pages/Medical/Medical.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
-import { useClienteId } from "../../utils/useClienteId";
-
+import { useRoleConfig,buildParams } from "../../utils/useRoleConfig";
 const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   const [data, setData] = useState([]);
   const [pacientes, setPacientes] = useState([]);
@@ -10,22 +9,21 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   const [tiposConsulta, setTiposConsulta] = useState([]);
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { clienteId, isCliente, resolving } = useClienteId(currentUser);
-
+  const rc = useRoleConfig(currentUser);
   useEffect(() => {
-    if (resolving) return; // esperar a tener clienteId
     fetchPacientes();
     fetchVeterinarios();
     fetchTiposConsulta();
     fetchCitas();
     fetchHistorial();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolving, clienteId]);
+ }, [rc.filtros.clienteId, rc.filtros.veterinarioId]);
 
   const fetchPacientes = async () => {
     try {
       // Si es cliente, solo sus animales (para el selector del formulario)
-      const params = isCliente && clienteId ? { cliente_id: clienteId } : {};
+      const params = buildParams(rc, "animales");
       const response = await api.get("/animales", { params });
       setPacientes(response.data.data || []);
     } catch (error) {
@@ -65,8 +63,8 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
       setLoading(true);
       // Si es cliente, filtrar historial solo de sus animales
       // La API filtra por animal_id; si hay varios animales, mostramos todos los del cliente
-      const params = isCliente && clienteId ? { cliente_id: clienteId } : {};
-      const response = await api.get("/historial-medico", { params });
+      const params = buildParams(rc, "historial-medico");
+      const response = await api.get("/historial-medico", { params }); // (O la ruta que uses)
 
       const historialData = response.data.data || [];
 
@@ -469,7 +467,8 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
   return (
     <div className="section medical-section">
       <div className="section-header">
-        <h2 className="section-title">Historias Clínicas</h2>
+        <h2 className="section-title"> {rc.isCliente ? 'Mis Historiales Médicos' : 'Historial Médico'}</h2>
+        {rc.canEdit && (
         <button
           className="btn btn-primary"
           onClick={() =>
@@ -478,6 +477,7 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
         >
           ➕ Agregar Historia
         </button>
+      )}
       </div>
 
       <table className="data-table">
@@ -611,6 +611,7 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
                   >
                     👁️ Ver
                   </button>
+                  {rc.canEdit && (
                   <button
                     className="btn btn-secondary"
                     onClick={() =>
@@ -622,12 +623,15 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
                   >
                     ✏️ Editar
                   </button>
+                  )}
+                  {rc.canEdit && (
                   <button
                     className="btn btn-danger"
                     onClick={() => handleDeleteRecord(record.id)}
                   >
                     🗑️ Eliminar
                   </button>
+                  )}
                 </td>
               </tr>
             ))
