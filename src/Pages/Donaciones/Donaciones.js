@@ -1,16 +1,19 @@
 // Pages/Donaciones/Donaciones.js
 import React, { useState, useEffect } from "react";
 import api from "../../api/axios";
-
-const Donations = ({ openModal, closeModal }) => {
+import {useRoleConfig,buildParams} from "../../utils/useRoleConfig";
+const Donations = ({ openModal, closeModal, currentUser}) => {
   const [data, setData] = useState([]);
   const [finesDonacion, setFinesDonacion] = useState([]);
   const [loading, setLoading] = useState(true);
+  const rc = useRoleConfig(currentUser);
+  console.log("RADAR GLOBAL ACTIVADO -> currentUser id:", currentUser?.id, "rol:", rc.roleId, "esCliente:", rc.isCliente);
 
   useEffect(() => {
     fetchFinesDonacion();
     fetchDonaciones();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   const fetchFinesDonacion = async () => {
     try {
@@ -24,7 +27,8 @@ const Donations = ({ openModal, closeModal }) => {
   const fetchDonaciones = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/donaciones");
+     const params = buildParams(rc, "donaciones");
+    const response = await api.get("/donaciones", { params });
 
       const donaciones = response.data.data || [];
 
@@ -93,6 +97,7 @@ const Donations = ({ openModal, closeModal }) => {
       e.preventDefault();
       try {
         const donacionData = {
+          usuario_id: currentUser.id||null,
           nombre_donante: formData.anonimo ? "Anónimo" : formData.nombreDonante,
           correo_donante: formData.correoDonante || null,
           telefono_donante: formData.telefonoDonante || null,
@@ -304,8 +309,8 @@ const Donations = ({ openModal, closeModal }) => {
     <div className="section donations-section">
       <div className="section-header">
         <div>
-          <h2 className="section-title">Gestión de Donaciones</h2>
-          <p style={{ color: "#666", marginTop: "8px" }}>
+          <h2 className="section-title">{rc.isCliente ? "Tus Donaciones" : "Gestión de Donaciones"}</h2>
+         {rc.canEdit && ( <p style={{ color: "#666", marginTop: "8px" }}>
             Total recaudado:{" "}
             <strong style={{ color: "#667eea", fontSize: "1.2rem" }}>
               {formatCurrency(totalDonaciones)}
@@ -313,22 +318,25 @@ const Donations = ({ openModal, closeModal }) => {
             <span style={{ fontSize: "0.9rem" }}>
               ({data.length} {data.length === 1 ? "donación" : "donaciones"})
             </span>
-          </p>
+          </p>)}
         </div>
+        
         <button
           className="btn btn-primary"
           onClick={() =>
-            openModal("Registrar Nueva Donación", <FormularioDonacion />)
+            openModal(rc.isCliente ? "Donar" : "Registrar Nueva Donación", <FormularioDonacion />)
           }
         >
-          ➕ Registrar Donación
+          
+          {rc.isCliente ? "💸 Hacer Donación" : "➕ Registrar Donación"}
         </button>
+        
       </div>
 
       <table className="data-table">
         <thead>
           <tr>
-            <th>ID</th>
+            {rc.canDelete && <th>ID</th>}
             <th>Donante</th>
             <th>Contacto</th>
             <th>Monto</th>
@@ -348,7 +356,7 @@ const Donations = ({ openModal, closeModal }) => {
           ) : (
             data.map((donacion) => (
               <tr key={donacion.donacion_id}>
-                <td>{donacion.donacion_id}</td>
+                {rc.canDelete && <td>{donacion.donacion_id}</td>}
                 <td>
                   <strong>{donacion.nombreDonante}</strong>
                   {donacion.anonimo && (
@@ -466,6 +474,7 @@ const Donations = ({ openModal, closeModal }) => {
                   >
                     👁️ Ver
                   </button>
+                  {rc.canEdit && (
                   <button
                     className="btn btn-secondary"
                     onClick={() =>
@@ -477,12 +486,15 @@ const Donations = ({ openModal, closeModal }) => {
                   >
                     ✏️ Editar
                   </button>
+                  )}
+                  {rc.canDelete && (
                   <button
                     className="btn btn-danger"
                     onClick={() => handleDeleteDonation(donacion.donacion_id)}
                   >
                     🗑️ Eliminar
                   </button>
+                  )}
                 </td>
               </tr>
             ))
@@ -491,7 +503,7 @@ const Donations = ({ openModal, closeModal }) => {
       </table>
 
       {/* Resumen de estadísticas */}
-      {data.length > 0 && (
+      {rc.canDelete && data.length > 0 && (
         <div
           style={{
             marginTop: "30px",

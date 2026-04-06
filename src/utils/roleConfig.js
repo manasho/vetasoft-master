@@ -41,12 +41,15 @@ const MODULOS_POR_ROL = {
 export function getRoleConfig(currentUser) {
   const roleId = currentUser?.roleId ?? 0;
 
-  // Solo rol 1 y 2 son administradores con acceso completo a los datos
-  const isAdmin     = roleId === 1 || roleId === 2;
-  const isCliente   = roleId === 3;
-  const isDirector  = roleId === 4;
-  const isMedico    = roleId === 5;
-  const isAuxiliar  = roleId === 6;
+  // Solo rol 2 (Administrador general) tiene acceso total estricto al sistema entero
+  const isAdmin          = roleId === 2;
+  const isAdminFundacion = roleId === 1;
+
+  // El Rol 1 actúa como Cliente en casi todo (ve su propia info) pero administra Adopciones
+  const isCliente     = roleId === 3 || roleId === 1;
+  const isDirector    = roleId === 4;
+  const isMedico      = roleId === 5;
+  const isAuxiliar    = roleId === 6;
 
   // Personal incluye director, médico tratante y auxiliar (todos tienen veterinario_id)
   const isPersonalMedico = isDirector || isMedico || isAuxiliar;
@@ -54,19 +57,20 @@ export function getRoleConfig(currentUser) {
   return {
     roleId,
     isAdmin,
+    isAdminFundacion,
     isCliente,
     isPersonalMedico,
 
-    // ¿Puede crear/editar? Clientes no (solo se postulan o donan)
-    canEdit:   !isCliente,
+    // ¿Puede crear/editar? Clientes no (solo se postulan o donan), excepto el AdminFundacion
+    canEdit:   (!isCliente) || isAdminFundacion,
     
     // ¿Puede eliminar? Solo administradores
-    canDelete: isAdmin,
+    canDelete: isAdmin || isAdminFundacion,
 
-    // Filtros estrictos: Solo isAdmin ve todo. Todos los demás filtran por su ID.
     filtros: {
       clienteId:      isCliente        ? (currentUser?.clienteId ?? null) : null,
       veterinarioId:  isPersonalMedico ? (currentUser?.veterinarioId ?? null) : null,
+      usuarioId:      isCliente        ? (currentUser?.id ?? null) : null,
     },
 
     modulosPermitidos: MODULOS_POR_ROL[roleId] ?? [],
@@ -108,9 +112,17 @@ export function buildParams(roleConfig, recurso, extraParams = {}) {
       break;
 
     case "donaciones":
-      if (roleConfig.isCliente && roleConfig.filtros.clienteId === null) {
-        // Fallback para filtro si se maneja en el componente (ej. por correo)
+      if (roleConfig.filtros?.usuarioId) {
+        base.usuario_id = roleConfig.filtros.usuarioId;
       }
+      break;
+
+    case "adopciones":
+      // El cliente normal de fundación solo ve sus postulaciones
+      if (roleConfig.isCliente && !roleConfig.isAdminFundacion && roleConfig.filtros?.usuarioId) {
+        base.usuario_id = roleConfig.filtros.usuarioId;
+      }
+      // El AdminFundación (rol 1) y el Admin (rol 2) las ven TODAS, no inyectamos filtro.
       break;
 
     default:

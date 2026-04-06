@@ -246,6 +246,7 @@ function App() {
             openModal={openModal} 
             closeModal={closeModal}
             authToken={authToken}
+            currentUser={currentUser}
           />
         );
       
