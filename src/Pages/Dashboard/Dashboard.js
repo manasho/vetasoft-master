@@ -1,7 +1,7 @@
 // Pages/Dashboard/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
-
+import { useRoleConfig, buildParams } from '../../utils/useRoleConfig';
 const Dashboard = ({ openModal, closeModal, currentUser }) => {
   const [stats, setStats] = useState({
     usuarios: 0,
@@ -16,9 +16,9 @@ const Dashboard = ({ openModal, closeModal, currentUser }) => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usuariosLoading, setUsuariosLoading] = useState(false);
-
+  const rc = useRoleConfig(currentUser);
   // Roles administrativos: Admin fundación (1) y Administrador (2)
-  const isAdmin = currentUser?.roleId === 1 || currentUser?.roleId === 2;
+  const isAdmin = currentUser?.roleId === 1  || currentUser?.roleId === 2;
 
   useEffect(() => {
     fetchStats();
@@ -34,14 +34,20 @@ const Dashboard = ({ openModal, closeModal, currentUser }) => {
       setLoading(true);
       // Obtener estadísticas de cada endpoint
       const [usuariosRes, clientesRes, animalesRes, citasRes, donacionesRes, solicitudesRes, historialesRes] = await Promise.all([
-        api.get('/usuarios').catch(() => ({ data: { data: [] } })),
-        api.get('/clientes').catch(() => ({ data: { data: [] } })),
-        api.get('/animales').catch(() => ({ data: { data: [] } })),
-        api.get('/citas').catch(() => ({ data: { data: [] } })),
-        api.get('/donaciones').catch(() => ({ data: { data: [] } })),
-        api.get('/solicitudes-adopcion').catch(() => ({ data: { data: [] } })),
-        api.get('/historial-medico').catch(() => ({ data: { data: [] } }))
-      ]);
+        // Solo administradores pueden ver listas de usuarios y clientes
+        isAdmin ? api.get('/usuarios') : Promise.resolve({ data: { data: [] } }),
+        isAdmin ? api.get('/clientes') : Promise.resolve({ data: { data: [] } }),
+        
+        // El resto depende de buildParams (si es cliente, filtra por su ID)
+        api.get('/animales', { params: buildParams(rc, "animales") }),
+        api.get('/citas', { params: buildParams(rc, "citas") }),
+        api.get('/donaciones', { params: buildParams(rc, "donaciones") }),
+        api.get('/solicitudes-adopcion', { params: buildParams(rc, "adopciones") }),
+        api.get('/historial-medico', { params: buildParams(rc, "historial-medico") })
+      ].map(p => p.catch(err => {
+        console.warn("Módulo de dashboard con acceso restringido o error:", err);
+        return { data: { data: [] } };
+      })));
 
       setStats({
         usuarios: usuariosRes.data.data?.length || 0,
