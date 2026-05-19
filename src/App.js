@@ -14,6 +14,7 @@ import Clientes from "./Pages/Clientes/Clientes.js";
 import Veterinarios from "./Pages/Veterinarios/Veterinarios.js";
 import Campanas from "./Pages/Campanas/Campanas.js";
 import Vacunacion from "./Pages/Vacunacion/Vacunacion.js";
+import Reportes from "./Pages/Reportes/Reportes.js";
 import Modal from "./components/Modal.js";
 import api from "./api/axios";
 import { mapModulosToNav } from "./utils/modulosConfig";
@@ -163,6 +164,7 @@ function App() {
       "veterinarios",
       "campanas",
       "vacunacion",
+      "reportes",
     ];
 
     // Verificar si la sección requiere autenticación
@@ -289,6 +291,13 @@ function App() {
           <Vacunacion
             openModal={openModal}
             closeModal={closeModal}
+            currentUser={currentUser}
+          />
+        );
+      
+      case "reportes":
+        return (
+          <Reportes
             currentUser={currentUser}
           />
         );

@@ -20,8 +20,8 @@ const MODULO_MAP = {
   "/campanas":             { sectionId: "campanas",     emoji: "📢", label: null },
   "/donaciones":           { sectionId: "Donaciones",   emoji: "💰", label: null },
   "/solicitudes-adopcion": { sectionId: "adoptions",    emoji: "❤️", label: null },
-  //"/usuarios":             { sectionId: "usuarios",     emoji: "👥", label: null },
-  //"/reportes":             { sectionId: "reportes",     emoji: "📈", label: null },
+  //"/usuarios":           { sectionId: "usuarios",     emoji: "👥", label: null },
+  "/reportes":             { sectionId: "reportes",     emoji: "📈", label: "Reportes" },
 };
 
 /**

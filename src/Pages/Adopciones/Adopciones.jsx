@@ -62,7 +62,7 @@ const Adopciones = ({ openModal, closeModal, currentUser }) => {
 
   const fetchAnimales = async () => {
     try {
-      const res = await api.get("/animales");
+      const res = await api.get("/animales/adopcion");
       setAnimales(res.data.data || []);
     } catch (error) {
       console.error("Error cargando animales:", error);
