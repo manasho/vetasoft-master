@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  `${window.location.protocol}//${window.location.hostname}:4000`;
+
 const api = axios.create({
-  baseURL: (process.env.REACT_APP_API_URL || "http://localhost:4000") + "/api", // Backend Express
+  baseURL: `${API_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,25 +16,27 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // donde guardaremos el JWT
+    const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
 /**
- * Interceptor de respuestas (opcional pero recomendado)
+ * Interceptor de respuestas
  */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       console.warn("Token inválido o expirado");
-      // aquí luego puedes redirigir al login
     }
+
     return Promise.reject(error);
   }
 );
