@@ -80,6 +80,9 @@ const Auth = ({ onAuthSuccess, onLoginSuccess, onLogin, onRegister, hideWelcomeS
         localStorage.setItem("authToken", token);
         localStorage.setItem("vetasoft_token", token);
         localStorage.setItem("token", token);
+        const clienteId = usuario.cliente_id ?? usuario.clienteId ?? null;
+        const veterinarioId = usuario.veterinario_id ?? usuario.veterinarioId ?? null;
+
         localStorage.setItem(
           "currentUser",
           JSON.stringify({
@@ -88,6 +91,8 @@ const Auth = ({ onAuthSuccess, onLoginSuccess, onLogin, onRegister, hideWelcomeS
             email: usuario.correo,
             role: usuario.nombre_rol || "Usuario",
             roleId: usuario.rol_id,
+            clienteId,
+            veterinarioId,
           })
         );
         

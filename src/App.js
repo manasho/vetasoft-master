@@ -102,13 +102,13 @@ function App() {
     setIsLoggedIn(true);
     
     const userData = {
-      id: usuario.usuario_id,
+      id: usuario.usuario_id ?? usuario.id,
       name: usuario.nombre,
       email: usuario.correo,
-      role: usuario.nombre_rol || 'Usuario',
-      roleId: usuario.rol_id,
-      clienteId:     usuario.cliente_id      ?? null, // rol 3 (cliente)
-      veterinarioId: usuario.veterinario_id  ?? null, // rol 5 (médico tratante) / 6 (auxiliar)
+      role: usuario.nombre_rol || usuario.role || 'Usuario',
+      roleId: usuario.rol_id ?? usuario.roleId,
+      clienteId:     usuario.cliente_id   ?? usuario.clienteId ?? null,
+      veterinarioId: usuario.veterinario_id ?? usuario.veterinarioId ?? null,
     };
     
     setCurrentUser(userData);

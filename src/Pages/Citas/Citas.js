@@ -92,7 +92,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
           cita_id: citasData[0].cita_id,
           animal_nombre: citasData[0].animal_nombre,
           veterinario_nombre: citasData[0].veterinario_nombre,
-          tipo_consulta_nombre: citasData[0].tipo_consulta_nombre,
+          nombre: citasData[0].nombre,
           estado_nombre: citasData[0].estado_nombre,
           todos_los_campos: Object.keys(citasData[0]),
         });
@@ -112,7 +112,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
         estadoNombre: cita.estado_nombre || "Sin estado",
         observaciones: cita.observaciones,
         tipoConsultaId: cita.tipo_consulta_id,
-        tipoConsultaNombre: cita.tipo_consulta_nombre || "Sin tipo",
+        tipoConsultaNombre: cita.nombre || "Sin tipo",
         creadoPor: cita.creado_por,
         creadoPorNombre: cita.usuario_creador?.nombre || "N/A",
         fechaCreacion: cita.fecha_creacion || cita.created_at,
@@ -173,13 +173,20 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
       }
 
       try {
+        // Validación adicional para tipos de consulta
+        const tipoConsultaIdParsed = parseInt(formData.tipoConsultaId);
+        if (isNaN(tipoConsultaIdParsed)) {
+          alert("Tipo de consulta inválido. Por favor selecciona uno válido.");
+          return;
+        }
+
         const citaData = {
           animal_id: parseInt(formData.pacienteId),
           veterinario_id: parseInt(formData.veterinarioId),
           fecha_cita: formData.fechaCita,
           motivo: formData.motivo || null,
           estado_id: parseInt(formData.estadoId),
-          tipo_consulta_id: parseInt(formData.tipoConsultaId),
+          tipo_consulta_id: tipoConsultaIdParsed,
           observaciones: formData.observaciones || null,
           creado_por: currentUser?.id || null,
         };
@@ -187,6 +194,7 @@ const Appointments = ({ openModal, closeModal, authToken, currentUser }) => {
         // Debug: ver qué datos se están enviando
         console.log("📤 Datos a enviar para crear cita:", citaData);
         console.log("👤 Usuario actual:", currentUser);
+        console.log("🔍 Tipo consulta cargados:", tiposConsulta);
 
         if (cita) {
           await api.put(`/citas/${cita.citaId}`, citaData);

@@ -104,25 +104,6 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
     }
   };
 
-  const handleDeleteRecord = async (id) => {
-    if (
-      window.confirm(
-        "¿Estás seguro de que deseas eliminar este registro médico?"
-      )
-    ) {
-      try {
-        await api.delete(`/historial-medico/${id}`);
-        alert("Historia clínica eliminada exitosamente");
-        fetchHistorial();
-      } catch (error) {
-        console.error("Error al eliminar registro:", error);
-        alert(
-          "Error al eliminar el registro: " +
-            (error.response?.data?.error || error.message)
-        );
-      }
-    }
-  };
 
   const FormularioHistorial = ({ record = null }) => {
     const [formData, setFormData] = useState({
@@ -611,27 +592,6 @@ const Medical = ({ openModal, closeModal, authToken, currentUser }) => {
                   >
                     👁️ Ver
                   </button>
-                  {rc.canEdit && (
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() =>
-                      openModal(
-                        `Editar Historia Clínica #${record.id}`,
-                        <FormularioHistorial record={record} />
-                      )
-                    }
-                  >
-                    ✏️ Editar
-                  </button>
-                  )}
-                  {rc.canEdit && (
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDeleteRecord(record.id)}
-                  >
-                    🗑️ Eliminar
-                  </button>
-                  )}
                 </td>
               </tr>
             ))

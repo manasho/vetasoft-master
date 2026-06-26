@@ -22,6 +22,7 @@ const Pets = ({ openModal, closeModal, currentUser }) => {
     try {
       setLoading(true);
       const params = buildParams(rc, "animales");
+      console.log("🐾 Mascotas: roleConfig filtros=", rc.filtros, "params=", params);
       const res = await api.get("/animales", { params });
       if (!res.data.success) throw new Error("Error al obtener animales");
       const transformedData = res.data.data.map((a) => ({
